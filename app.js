@@ -19,35 +19,35 @@ const draw = () => {
     y: canvas.height / 2,
   };
 
-  const currentTime = new Date().getTime(),
-    elapsedTime = (currentTime - startTime) / 1000;
+  const currentTime = new Date().getTime();
+  let elapsedTime = (currentTime - startTime) / 10000;
 
   // draw circles
   pen.strokeStyle = "blue";
   pen.lineWidth = 1.5;
 
   // draw small circle 1
-  let angle = circleAngleOne + elapsedTime / 10;
-  const circleOneX = center.x + anchorRadius * Math.cos(angle),
-    circleOneY = center.y + anchorRadius * Math.sin(angle);
+  let angle = circleAngleOne + elapsedTime;
+  const x1 = center.x + anchorRadius * Math.cos(angle),
+    y1 = center.y + anchorRadius * Math.sin(angle);
   pen.beginPath();
-  pen.arc(circleOneX, circleOneY, circleRadius, 0, 2 * Math.PI);
+  pen.arc(x1, y1, circleRadius, 0, 2 * Math.PI);
   pen.stroke();
 
   // draw small circle 2
-  angle = circleAngleTwo + elapsedTime / 10;
-  const circleTwoX = center.x + anchorRadius * Math.cos(angle),
-    circleTwoY = center.y + anchorRadius * Math.sin(angle);
+  angle = circleAngleTwo + elapsedTime;
+  const x2 = center.x + anchorRadius * Math.cos(angle),
+    y2 = center.y + anchorRadius * Math.sin(angle);
   pen.beginPath();
-  pen.arc(circleTwoX, circleTwoY, circleRadius, 0, 2 * Math.PI);
+  pen.arc(x2, y2, circleRadius, 0, 2 * Math.PI);
   pen.stroke();
 
   // draw small circle 3
-  angle = circleAngleThree + elapsedTime / 10;
-  const circleThreeX = center.x + anchorRadius * Math.cos(angle),
-    circleThreeY = center.y + anchorRadius * Math.sin(angle);
+  angle = circleAngleThree + elapsedTime;
+  const x3 = center.x + anchorRadius * Math.cos(angle),
+    y3 = center.y + anchorRadius * Math.sin(angle);
   pen.beginPath();
-  pen.arc(circleThreeX, circleThreeY, circleRadius, 0, 2 * Math.PI);
+  pen.arc(x3, y3, circleRadius, 0, 2 * Math.PI);
   pen.stroke();
 
   // draw anchor circle
@@ -59,33 +59,58 @@ const draw = () => {
 
   // draw frame
   pen.beginPath();
-  pen.moveTo(circleOneX, circleOneY);
-  pen.lineTo(circleTwoX, circleTwoY);
+  pen.moveTo(x1, y1);
+  pen.lineTo(x2, y2);
   pen.stroke();
 
   pen.beginPath();
-  pen.moveTo(circleTwoX, circleTwoY);
-  pen.lineTo(circleThreeX, circleThreeY);
+  pen.moveTo(x2, y2);
+  pen.lineTo(x3, y3);
   pen.stroke();
 
   pen.beginPath();
-  pen.moveTo(circleThreeX, circleThreeY);
-  pen.lineTo(circleOneX, circleOneY);
+  pen.moveTo(x3, y3);
+  pen.lineTo(x1, y1);
   pen.stroke();
 
   // draw music circles
   pen.strokeStyle = "purple";
-  pen.lineWidth = 0.5;
+  pen.lineWidth = 1;
+  const velocity = 2000;
+  const pos1 = getMovingPos(x1, y1, x2, y2, velocity, elapsedTime);
   pen.beginPath();
-  pen.arc(
-    (circleOneX + circleTwoX) / 2,
-    (circleOneY + circleTwoY) / 2,
-    musicCircleRadius,
-    0,
-    2 * Math.PI
-  );
+  pen.arc(pos1.newX, pos1.newY, musicCircleRadius, 0, 2 * Math.PI);
+  pen.stroke();
+
+  const pos2 = getMovingPos(x2, y2, x3, y3, velocity, elapsedTime);
+  pen.beginPath();
+  pen.arc(pos2.newX, pos2.newY, musicCircleRadius, 0, 2 * Math.PI);
+  pen.stroke();
+
+  const pos3 = getMovingPos(x3, y3, x1, y1, velocity, elapsedTime);
+  pen.beginPath();
+  pen.arc(pos3.newX, pos3.newY, musicCircleRadius, 0, 2 * Math.PI);
   pen.stroke();
 
   requestAnimationFrame(draw);
 };
 draw();
+
+function getMovingPos(x1, y1, x2, y2, velocity, elapsedTime) {
+  let delta_x = x2 - x1;
+  let delta_y = y2 - y1;
+  const maxDistance = Math.sqrt(delta_x * delta_x + delta_y * delta_y);
+  const distance = elapsedTime * velocity;
+  const modDistance = distance % (2 * maxDistance); // double the maxDistance for oscillation
+
+  let newX, newY;
+  if (modDistance < maxDistance) {
+    newX = x1 + (delta_x / maxDistance) * modDistance;
+    newY = y1 + (delta_y / maxDistance) * modDistance;
+  } else {
+    newX = x2 - (delta_x / maxDistance) * (modDistance - maxDistance);
+    newY = y2 - (delta_y / maxDistance) * (modDistance - maxDistance);
+  }
+
+  return { newX, newY };
+}
