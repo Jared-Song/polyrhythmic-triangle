@@ -7,6 +7,8 @@ const anchorAngle1 = 0;
 const anchorAngle2 = (2 * Math.PI) / 3;
 const anchorAngle3 = (4 * Math.PI) / 3;
 
+// const numTriangles = 21;
+const numTriangles = 21;
 canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
 const anchorRadius = canvas.height * 0.4;
@@ -27,20 +29,20 @@ let x1 = anchor.x1,
   x3 = anchor.x3,
   y3 = anchor.y3;
 
-for (i = 0; i < 21; i++) {
+for (i = 0; i < numTriangles; i++) {
   initInnerTriangles(x1, y1, x2, y2, x3, y3, i);
+  initNote(i);
 }
 
 function initInnerTriangles(x1, y1, x2, y2, x3, y3, index) {
-  const fraction = (index) / 21;
+  const fraction = index / numTriangles;
   const newX1 = (x2 - x1) * fraction + x1;
   const newY1 = (y2 - y1) * fraction + y1;
 
   const newX2 = (x3 - x2) * fraction + x2;
   const newY2 = (y3 - y2) * fraction + y2;
 
-  const velocity = getVelocity(newX1, newY1, newX2, newY2, index);
-  triangles[index] = velocity;
+  initTriangle(newX1, newY1, newX2, newY2, index);
 }
 
 const draw = () => {
@@ -63,20 +65,38 @@ const draw = () => {
     x3 = anchor.x3,
     y3 = anchor.y3;
 
-  drawMusicCircles(x1, y1, x2, y2, x3, y3, elapsedTime, 0);
-
-  for (i = 1; i < 21; i++) {
+  for (i = 0; i < numTriangles; i++) {
     drawInnerTriangles(x1, y1, x2, y2, x3, y3, i, elapsedTime);
+    if (currentTime >= triangles[i][3]) {
+      triangles[i][4].play()
+      triangles[i][2] = triangles[i][3]
+    }
+
+    triangles[i][3] = calculateNextBeatTime(triangles[i][2], triangles[i][1], triangles[i][0])
   }
+
   requestAnimationFrame(draw);
 };
 draw();
+
+function initNote(index) {
+  const audio = new Audio(`resources/${index + 1}.mp3`)
+  audio.volume = 0.15;
+  
+  triangles[i][4] = audio;
+}
+
+function calculateNextBeatTime(lastBeatTime, distance, velocity) {
+  // velocity = distance * time
+  // time = distance / velocity
+  return lastBeatTime + (distance / velocity) * 1000;
+}
 
 function drawInnerTriangles(x1, y1, x2, y2, x3, y3, index, elapsedTime) {
   pen.strokeStyle = "gray";
   pen.lineWidth = 0.5;
 
-  const fraction = (index) / 21;
+  const fraction = index / numTriangles;
   const newX1 = (x2 - x1) * fraction + x1;
   const newY1 = (y2 - y1) * fraction + y1;
 
@@ -103,19 +123,18 @@ function drawMusicCircles(x1, y1, x2, y2, x3, y3, elapsedTime, index) {
   // draw music circles
   pen.fillStyle = "purple";
   pen.lineWidth = 1;
-  const velocity = triangles[index];
 
-  const pos1 = getMovingPos(x1, y1, x2, y2, velocity, elapsedTime);
+  const pos1 = getMovingPos(x1, y1, x2, y2, index, elapsedTime);
   pen.beginPath();
   pen.arc(pos1.newX, pos1.newY, musicCircleRadius, 0, 2 * Math.PI);
   pen.fill();
 
-  const pos2 = getMovingPos(x2, y2, x3, y3, velocity, elapsedTime);
+  const pos2 = getMovingPos(x2, y2, x3, y3, index, elapsedTime);
   pen.beginPath();
   pen.arc(pos2.newX, pos2.newY, musicCircleRadius, 0, 2 * Math.PI);
   pen.fill();
 
-  const pos3 = getMovingPos(x3, y3, x1, y1, velocity, elapsedTime);
+  const pos3 = getMovingPos(x3, y3, x1, y1, index, elapsedTime);
   pen.beginPath();
   pen.arc(pos3.newX, pos3.newY, musicCircleRadius, 0, 2 * Math.PI);
   pen.fill();
@@ -178,7 +197,7 @@ function drawTriangle(x1, y1, x2, y2, x3, y3) {
   pen.stroke();
 }
 
-function getVelocity(x1, y1, x2, y2, index) {
+function initTriangle(x1, y1, x2, y2, index) {
   let delta_x = x2 - x1;
   let delta_y = y2 - y1;
   const maxDistance = Math.sqrt(delta_x * delta_x + delta_y * delta_y);
@@ -187,13 +206,16 @@ function getVelocity(x1, y1, x2, y2, index) {
   const numBounces = 100 - index;
   const cycleDuration = 900; // 900 = 15 mins
   const velocity = (numBounces * maxDistance) / cycleDuration;
-  return velocity;
+
+  triangles[index] = [velocity, maxDistance, startTime, calculateNextBeatTime(startTime, maxDistance, velocity)];
 }
 
-function getMovingPos(x1, y1, x2, y2, velocity, elapsedTime) {
+function getMovingPos(x1, y1, x2, y2, index, elapsedTime) {
+  const velocity = triangles[index][0];
+  const maxDistance = triangles[index][1];
+  
   let delta_x = x2 - x1;
   let delta_y = y2 - y1;
-  const maxDistance = Math.sqrt(delta_x * delta_x + delta_y * delta_y);
   const distance = elapsedTime * velocity;
   const modDistance = distance % (2 * maxDistance); // double the maxDistance for oscillation
 
