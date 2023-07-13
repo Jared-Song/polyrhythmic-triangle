@@ -14,6 +14,35 @@ const circleRadius = anchorRadius * 0.025;
 const musicCircleRadius = circleRadius * 0.35;
 let triangles = [];
 
+const center = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+};
+
+let anchor = drawAnchor(center, 0);
+let x1 = anchor.x1,
+  y1 = anchor.y1,
+  x2 = anchor.x2,
+  y2 = anchor.y2,
+  x3 = anchor.x3,
+  y3 = anchor.y3;
+
+for (i = 0; i < 21; i++) {
+  initInnerTriangles(x1, y1, x2, y2, x3, y3, i);
+}
+
+function initInnerTriangles(x1, y1, x2, y2, x3, y3, index) {
+  const fraction = (index) / 21;
+  const newX1 = (x2 - x1) * fraction + x1;
+  const newY1 = (y2 - y1) * fraction + y1;
+
+  const newX2 = (x3 - x2) * fraction + x2;
+  const newY2 = (y3 - y2) * fraction + y2;
+
+  const velocity = getVelocity(newX1, newY1, newX2, newY2, index);
+  triangles[index] = velocity;
+}
+
 const draw = () => {
   canvas.width = canvas.clientWidth;
   canvas.height = canvas.clientHeight;
@@ -47,14 +76,15 @@ function drawInnerTriangles(x1, y1, x2, y2, x3, y3, index, elapsedTime) {
   pen.strokeStyle = "gray";
   pen.lineWidth = 0.5;
 
-  const newX1 = (x2 - x1) * (index / 21) + x1;
-  const newY1 = (y2 - y1) * (index / 21) + y1;
+  const fraction = (index) / 21;
+  const newX1 = (x2 - x1) * fraction + x1;
+  const newY1 = (y2 - y1) * fraction + y1;
 
-  const newX2 = (x3 - x2) * (index / 21) + x2;
-  const newY2 = (y3 - y2) * (index / 21) + y2;
+  const newX2 = (x3 - x2) * fraction + x2;
+  const newY2 = (y3 - y2) * fraction + y2;
 
-  const newX3 = (x1 - x3) * (index / 21) + x3;
-  const newY3 = (y1 - y3) * (index / 21) + y3;
+  const newX3 = (x1 - x3) * fraction + x3;
+  const newY3 = (y1 - y3) * fraction + y3;
 
   drawTriangle(newX1, newY1, newX2, newY2, newX3, newY3);
   drawMusicCircles(
@@ -73,8 +103,7 @@ function drawMusicCircles(x1, y1, x2, y2, x3, y3, elapsedTime, index) {
   // draw music circles
   pen.fillStyle = "purple";
   pen.lineWidth = 1;
-
-  const velocity = getVelocity(x1, y1, x2, y2, index);
+  const velocity = triangles[index];
 
   const pos1 = getMovingPos(x1, y1, x2, y2, velocity, elapsedTime);
   pen.beginPath();
