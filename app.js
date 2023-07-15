@@ -1,7 +1,5 @@
 const canvas = document.querySelector("#canvas");
 const pen = canvas.getContext("2d");
-pen.shadowColor = "white";
-pen.shadowBlur = 100;
 
 const settings = {
   reverse: false,
@@ -17,7 +15,13 @@ const numTriangles = 21;
 // const numTriangles = 1;
 canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
-const anchorRadius = canvas.height * 0.4;
+let anchorRadius = canvas.height * 0.4;
+
+// mobile devices
+if (canvas.width < canvas.height) {
+  anchorRadius = canvas.width * 0.4;
+}
+
 const circleRadius = anchorRadius * 0.025;
 const musicCircleRadius = circleRadius * 0.25;
 let triangles = [];
@@ -147,9 +151,17 @@ function drawMusicCircles(x1, y1, x2, y2, x3, y3, elapsedTime, currentTime, inde
   // draw music circles
   pen.fillStyle = "white";
   pen.lineWidth = 2;
-
+  // const size = musicCircleRadius * 2;
+  // pen.shadowColor = "yellow";
+  
   pen.globalAlpha = calculateOpacity(currentTime, triangles[index][2], 0, 1, 4000);
   const pos1 = getMovingPos(x1, y1, x2, y2, index, elapsedTime);
+
+  // pen.clearRect(pos1.newX, pos1.newY, size, size);
+  // pen.shadowBlur = 50;
+  // pen.stroke();
+
+  // pen.shadowBlur = 0;
   pen.beginPath();
   pen.arc(pos1.newX, pos1.newY, musicCircleRadius, 0, 2 * Math.PI);
   pen.fill();
@@ -159,6 +171,10 @@ function drawMusicCircles(x1, y1, x2, y2, x3, y3, elapsedTime, currentTime, inde
 
   pen.globalAlpha = calculateOpacity(currentTime, triangles[index][2], 0, 1, 4000);
   const pos2 = getMovingPos(x2, y2, x3, y3, index, elapsedTime);
+  // pen.shadowBlur = 50;
+  pen.stroke();
+
+  // pen.shadowBlur = 0;
   pen.beginPath();
   pen.arc(pos2.newX, pos2.newY, musicCircleRadius, 0, 2 * Math.PI);
   pen.fill();
@@ -168,6 +184,10 @@ function drawMusicCircles(x1, y1, x2, y2, x3, y3, elapsedTime, currentTime, inde
 
   pen.globalAlpha = calculateOpacity(currentTime, triangles[index][2], 0, 1, 4000);
   const pos3 = getMovingPos(x3, y3, x1, y1, index, elapsedTime);
+  // pen.shadowBlur = 50;
+  // pen.stroke();
+
+  // pen.shadowBlur = 0;
   pen.beginPath();
   pen.arc(pos3.newX, pos3.newY, musicCircleRadius, 0, 2 * Math.PI);
   pen.fill();
@@ -221,24 +241,37 @@ function calculateOpacity(currentTime, lastImpactTime, baseOpacity, maxOpacity, 
 }
 
 function drawTriangle(x1, y1, x2, y2, x3, y3, currentTime, index) {
-  pen.lineWidth = 0.5;
   pen.globalAlpha = calculateOpacity(currentTime, triangles[index][2], 0, 1, 8000);
   pen.strokeStyle = "#F5c782";
+  const lineShadowBlur = 5;
+  const triangleLineWidth = 0.5
+  const lineShadowWidth = 1.5;
+  const lineShadowColor = "yellow";
 
+  drawLine(triangleLineWidth, x1, y1, x2, y2)
+  drawShadow(lineShadowColor, lineShadowWidth, lineShadowBlur)
+
+  drawLine(triangleLineWidth, x2, y2, x3, y3)
+  drawShadow(lineShadowColor, lineShadowWidth, lineShadowBlur)
+
+  drawLine(triangleLineWidth, x3, y3, x1, y1)
+  drawShadow(lineShadowColor, lineShadowWidth, lineShadowBlur)
+}
+
+function drawLine(lineWidth, x1, y1, x2, y2) {
+  pen.lineWidth = lineWidth;
   pen.beginPath();
   pen.moveTo(x1, y1);
   pen.lineTo(x2, y2);
   pen.stroke();
+}
 
-  pen.beginPath();
-  pen.moveTo(x2, y2);
-  pen.lineTo(x3, y3);
+function drawShadow(shadowColor, shadowWidth, shadowBlur) {
+  pen.shadowColor = shadowColor;
+  pen.lineWidth = shadowWidth;
+  pen.shadowBlur = shadowBlur;
   pen.stroke();
-
-  pen.beginPath();
-  pen.moveTo(x3, y3);
-  pen.lineTo(x1, y1);
-  pen.stroke();
+  pen.shadowBlur = 0; // reset shadowBlur
 }
 
 function initTriangle(x1, y1, x2, y2, index) {
